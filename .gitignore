@@ -1,0 +1,9 @@
+logs/
+token
+version-sha
+code
+extensions/
+user-data/
+cli-data/
+projects/
+

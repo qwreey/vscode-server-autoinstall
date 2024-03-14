@@ -31,15 +31,28 @@ INSTALLPID=""
 [ ! -e "$SPATH/extensions" ] && mkdir -p "$SPATH/extensions"
 [ ! -e "$SPATH/logs" ] && mkdir -p "$SPATH/logs"
 [ ! -e "$SPATH/projects" ] && mkdir -p "$SPATH/projects"
-
-# Check token
-if [ ! -e "$SPATH/token" ]; then
-	openssl rand -hex 16 > "$SPATH/token"
-fi
+[ ! -e "$SPATH/custom" ] && mkdir -p "$SPATH/custom"
 
 # Run code server
 LOG="$SPATH/logs/$(date +%Z-%Y.%m.%d-%H.%M.%S)"
-"$SPATH/code" serve-web --connection-token "$(cat "$SPATH/token")" --accept-server-license-terms --port 9104 --cli-data-dir "$SPATH/cli-data" --user-data-dir "$SPATH/user-data" --extensions-dir "$SPATH/extensions" |& tee -a "$LOG" &
+codeargs=()
+if [ -e "$SPATH/token" ]; then
+	# import token
+	codeargs+=( "--connection-token" "$(cat "$SPATH/token")" )
+elif [ ! -z "$TOKEN" ]; then
+	codeargs+=( "--connection-token" "$TOKEN" )
+else
+	# without token
+	codeargs+=( "--without-connection-token" )
+fi
+if [ ! -z "$PORT" ]; then
+	codeargs+=( "--port" "$PORT" )
+fi
+if [ ! -z "$HOST" ]; then
+	codeargs+=( "--host" "$HOST" )
+fi
+
+"$SPATH/code" serve-web --accept-server-license-terms --cli-data-dir "$SPATH/cli-data" --user-data-dir "$SPATH/user-data" --extensions-dir "$SPATH/extensions" ${codeargs[@]} |& tee -a "$LOG" &
 CODEPID="$!"
 wait "$CODEPID"
 CODECODE="$?"
